@@ -27,6 +27,7 @@ fun App() {
     var endDateMillis by remember { mutableStateOf<Long?>(null) }
     var useMonthOffset by remember { mutableStateOf(true) }
     var monthsBeforeDate2Text by remember { mutableStateOf("2") }
+    var yearIntervalInput by remember { mutableStateOf("") }
 
     // Dialog visibility states
     var showStartPicker by remember { mutableStateOf(false) }
@@ -53,6 +54,7 @@ fun App() {
     val calculatedDifference = remember(startDateMillis, endDateMillis, useMonthOffset, monthsBeforeDate2) {
         calculateDifference(startDateMillis, endDateMillis, useMonthOffset, monthsBeforeDate2)
     }
+
     AgeDateTheme {
         Box(
             modifier = Modifier
@@ -142,7 +144,7 @@ fun App() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Final difference display text field
+                // Read-only calculated difference display
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,28 +157,68 @@ fun App() {
                     OutlinedTextField(
                         value = calculatedDifference,
                         onValueChange = {},
-                        label = { Text("Différence : ") },
+                        label = { Text("Différence calculée : ") },
                         readOnly = true,
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                             disabledTextColor = MaterialTheme.colorScheme.onSurface,
                             disabledBorderColor = MaterialTheme.colorScheme.outline,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledSupportingTextColor = MaterialTheme.colorScheme.primary
-
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         supportingText = {
                             if (showCopiedHint) {
                                 Text("Copié dans le presse-papiers")
                             } else {
-                                Text("Cliquez pour copier")
+                                Text("Cliquez pour copier le résultat")
                             }
-                        },
+                        }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Editable year interval input
+                OutlinedTextField(
+                    value = yearIntervalInput,
+                    onValueChange = { newValue ->
+                        yearIntervalInput = newValue
+                        val yearValue = newValue.replace(",", ".").trim().toFloatOrNull()
+                        if (yearValue != null) {
+                            val years = kotlin.math.abs(yearValue.toInt())
+                            val fractionalYear = kotlin.math.abs(yearValue % 1.0f)
+                            val months = (fractionalYear * 12).toInt()
+                            val period = DatePeriod(years = years, months = months)
+
+                            if (yearValue >= 0) {
+                                startDateMillis?.let { start ->
+                                    val startLocalDate = Instant.fromEpochMilliseconds(start)
+                                        .toLocalDateTime(TimeZone.UTC).date
+                                    val newEndLocalDate = startLocalDate.plus(period)
+                                    endDateMillis = newEndLocalDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+                                    endPickerState.selectedDateMillis = endDateMillis
+                                }
+                            } else {
+                                endDateMillis?.let { end ->
+                                    val endLocalDate = Instant.fromEpochMilliseconds(end)
+                                        .toLocalDateTime(TimeZone.UTC).date
+                                    val newStartLocalDate = endLocalDate.minus(period)
+                                    startDateMillis =
+                                        newStartLocalDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+                                    startPickerState.selectedDateMillis = startDateMillis
+                                }
+                            }
+                        }
+                    },
+                    label = { Text("Saisir intervalle (années) : ") },
+                    placeholder = { Text("Ex: 1.5 ou -2") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    )
+                )
             }
         }
 
