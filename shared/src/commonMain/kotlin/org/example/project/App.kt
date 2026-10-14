@@ -1,8 +1,8 @@
 package org.example.project
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.datetime.*
+import org.example.project.theme.AgeDateTheme
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
@@ -52,16 +53,11 @@ fun App() {
     val calculatedDifference = remember(startDateMillis, endDateMillis, useMonthOffset, monthsBeforeDate2) {
         calculateDifference(startDateMillis, endDateMillis, useMonthOffset, monthsBeforeDate2)
     }
-    val colorScheme = if (!isSystemInDarkTheme()) {
-        darkColorScheme()
-    } else {
-        lightColorScheme()
-    }
-    MaterialTheme(
-        colorScheme = colorScheme
-    ) {
+    AgeDateTheme {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.TopCenter
         ) {
             Column(
@@ -71,10 +67,12 @@ fun App() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Text(
                     text = "Calcul de temps entre deux dates",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -103,7 +101,7 @@ fun App() {
                 ) {
                     Text(
                         "Décalage de date 2",
-                        color = colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Switch(
                         checked = useMonthOffset,
@@ -122,6 +120,8 @@ fun App() {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
+                } else {
+                    Spacer(modifier = Modifier.height(64.dp))
                 }
 
                 Box(modifier = Modifier.fillMaxWidth().clickable { showEndPicker = true }) {
